@@ -1,6 +1,7 @@
 package ru.drobyazko.services;
 
 import ru.drobyazko.common.*;
+import ru.drobyazko.util.CraneInitializer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,20 +14,27 @@ public class TimeTableGeneratorService implements ShipService {
     private final int bulkCraneAmount = 2;
     private final int liquidCraneAmount = 2;
     private final int containerCraneAmount = 2;
+    private final int bulkCraneEfficiency = 1;
+    private final int liquidCraneEfficiency = 1;
+    private final int containerCraneEfficiency = 1;
     private final int totalCraneAmount = bulkCraneAmount +
             liquidCraneAmount + containerCraneAmount;
-    private CyclicBarrier cyclicBarrier;
-    private TimeTable timeTable;
+    private final CyclicBarrier cyclicBarrier;
+    private final TimeTable timeTable;
 
     public TimeTableGeneratorService() {
+        timeTable = new TimeTable();
+        cyclicBarrier = new CyclicBarrier(totalCraneAmount);
     }
 
     public TimeTable generateTimeTable() {
+        createShips();
+        List<Crane> craneList = CraneInitializer.createCraneList(bulkCraneAmount, liquidCraneAmount, containerCraneAmount
+                , bulkCraneEfficiency, liquidCraneEfficiency, containerCraneEfficiency);
         List<CraneRunnable> craneRunnableList = new ArrayList<>();
-        initEntities();
 
         for(int i = 0; i < totalCraneAmount; ++i) {
-            craneRunnableList.add( new CraneRunnable(this, timeTable.getCraneList().get(i) ) );
+            craneRunnableList.add( new CraneRunnable(this, craneList.get(i) ) );
         }
 
         for(int i = 0; i < totalCraneAmount; ++i) {
@@ -49,49 +57,28 @@ public class TimeTableGeneratorService implements ShipService {
         return timeTable;
     }
 
-    @Override
-    public ShipSlot requestShip(CraneRunnable craneRunnable) {
-        for (ShipSlot shipSlot : timeTable.getShipSlotList()) {
-
-            if(craneRunnable.getCrane().getCargoType() == shipSlot.getShip().getCargoType()
-                    && shipSlot.getShip().getWorkingWeight() > 0) {
-
-                if(shipSlot.getCranesWorkingOn() != 2) {
-                    shipSlot.setCranesWorkingOn(shipSlot.getCranesWorkingOn() + 1);
-                    return shipSlot;
-                }
-
-            }
-
-        }
-
-        return null;
-    }
-
-    private void initEntities() {
-        timeTable = new TimeTable();
-        cyclicBarrier = new CyclicBarrier(totalCraneAmount);
-
-        for(int i = 0; i < bulkCraneAmount; ++i) {
-            Crane newCraneBulk = new Crane(CargoType.BULK, 100);
-            timeTable.addCrane(newCraneBulk);
-        }
-
-        for(int i = 0; i < liquidCraneAmount; ++i) {
-            Crane newCraneLiquid = new Crane(CargoType.LIQUID, 100);
-            timeTable.addCrane(newCraneLiquid);
-        }
-
-        for(int i = 0; i < containerCraneAmount; ++i) {
-            Crane newCraneContainer = new Crane(CargoType.CONTAINER, 100);
-            timeTable.addCrane(newCraneContainer);
-        }
-
-        for(int i = 0; i < shipAmount; ++i) {
+    private void createShips() {
+        for (int i = 0; i < shipAmount; ++i) {
             Ship newShip = new Ship();
             ShipSlot newShipSlot = new ShipSlot(newShip);
             timeTable.addShipSlot(newShipSlot);
         }
+    }
+
+    @Override
+    public ShipSlot requestShip(CraneRunnable craneRunnable) {
+        for (ShipSlot shipSlot : timeTable.getShipSlotList()) {
+
+            if (craneRunnable.getCrane().getCargoType() == shipSlot.getShip().getCargoType()
+                    && shipSlot.getShip().getWorkingWeight() > 0
+                    && shipSlot.getCranesWorkingOn() != 2) {
+
+                shipSlot.setCranesWorkingOn(shipSlot.getCranesWorkingOn() + 1);
+                return shipSlot;
+            }
+
+        }
+        return null;
     }
 
     @Override

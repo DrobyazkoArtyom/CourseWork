@@ -1,6 +1,7 @@
 package ru.drobyazko.services;
 
 import ru.drobyazko.common.*;
+import ru.drobyazko.util.CraneInitializer;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -13,8 +14,11 @@ import static ru.drobyazko.util.TimeFormatter.formatTime;
 
 public class TimeTableSolverService implements ShipService {
 
+    private final int bulkCraneEfficiency = 1;
+    private final int liquidCraneEfficiency = 1;
+    private final int containerCraneEfficiency = 1;
+    private final TimeTable timeTable;
     private CyclicBarrier cyclicBarrier;
-    private TimeTable timeTable;
 
     public TimeTableSolverService(TimeTable timeTable) {
         this.timeTable = timeTable;
@@ -38,7 +42,9 @@ public class TimeTableSolverService implements ShipService {
 
                     nullifyShipSlots();
 
-                    List<Crane> craneList = initCraneList(bulkCraneAmount, liquidCraneAmount, containerCraneAmount);
+                    List<Crane> craneList = CraneInitializer.createCraneList(bulkCraneAmount, liquidCraneAmount
+                            , containerCraneAmount, bulkCraneEfficiency
+                            , liquidCraneEfficiency, containerCraneEfficiency);
                     List<CraneRunnable> craneRunnableList = new ArrayList<>();
                     int totalCraneAmount = bulkCraneAmount + liquidCraneAmount + containerCraneAmount;
 
@@ -94,8 +100,10 @@ public class TimeTableSolverService implements ShipService {
                 break;
             }
             System.out.println(shipSlot);
+
             ++doneShipsNumber;
             queueTime += shipSlot.getStartTime() - shipSlot.getArrivalTime();
+
             int dispatchTimeOffsetTemp = shipSlot.getDispatchTimeOffsetNominal();
             if(dispatchTimeOffsetTemp > maxDispatchTimeOffset) {
                 maxDispatchTimeOffset = dispatchTimeOffsetTemp;
@@ -114,15 +122,6 @@ public class TimeTableSolverService implements ShipService {
 
     }
 
-    private void nullifyShipSlots() {
-        for (ShipSlot shipSlot : timeTable.getShipSlotList()) {
-            shipSlot.setCranesWorkingOn(0);
-            Ship ship = shipSlot.getShip();
-            ship.setWorkingWeight(ship.getNominalWeight());
-            shipSlot.setDispatchTimeOffset(shipSlot.getDispatchTimeOffsetNominal());
-        }
-    }
-
     private void generateTimeOffsets() {
         Random random = new Random();
         for (ShipSlot shipSlot : timeTable.getShipSlotList()) {
@@ -139,25 +138,15 @@ public class TimeTableSolverService implements ShipService {
         timeTable.getShipSlotList().sort(Comparator.comparing(ShipSlot::getArrivalTime));
     }
 
-    private List<Crane> initCraneList(int bulkCraneAmount, int liquidCraneAmount, int containerCraneAmount) {
-        List<Crane> craneList = new ArrayList<>();
-
-        for(int i = 0; i < bulkCraneAmount; ++i) {
-            Crane newCraneBulk = new Crane(CargoType.BULK, 1);
-            craneList.add(newCraneBulk);
+    private void nullifyShipSlots() {
+        for (ShipSlot shipSlot : timeTable.getShipSlotList()) {
+            shipSlot.setCranesWorkingOn(0);
+            Ship ship = shipSlot.getShip();
+            ship.setWorkingWeight(ship.getNominalWeight());
+            shipSlot.setDispatchTimeOffset(shipSlot.getDispatchTimeOffsetNominal());
+            shipSlot.setStartTime(-1);
+            shipSlot.setDispatchTime(-1);
         }
-
-        for(int i = 0; i < liquidCraneAmount; ++i) {
-            Crane newCraneLiquid = new Crane(CargoType.LIQUID, 1);
-            craneList.add(newCraneLiquid);
-        }
-
-        for(int i = 0; i < containerCraneAmount; ++i) {
-            Crane newCraneContainer = new Crane(CargoType.CONTAINER, 1);
-            craneList.add(newCraneContainer);
-        }
-
-        return craneList;
     }
 
     @Override
@@ -165,20 +154,15 @@ public class TimeTableSolverService implements ShipService {
         for (ShipSlot shipSlot : timeTable.getShipSlotList()) {
 
             if(craneRunnable.getCrane().getCargoType() == shipSlot.getShip().getCargoType()
-                    && shipSlot.getShip().getWorkingWeight() > 0) {
+                    && shipSlot.getShip().getWorkingWeight() > 0
+                    && shipSlot.getCranesWorkingOn() != 2
+                    && shipSlot.getArrivalTime() <= craneRunnable.getCurrentTick()) {
 
-                if(shipSlot.getArrivalTime() <= craneRunnable.getCurrentTick()) {
-                    if (shipSlot.getCranesWorkingOn() != 2) {
-                        shipSlot.setCranesWorkingOn(shipSlot.getCranesWorkingOn() + 1);
-                        return shipSlot;
-                    }
-
-                }
-
+                shipSlot.setCranesWorkingOn(shipSlot.getCranesWorkingOn() + 1);
+                return shipSlot;
             }
 
         }
-
         return null;
     }
 
@@ -192,4 +176,5 @@ public class TimeTableSolverService implements ShipService {
             e.printStackTrace();
         }
     }
+
 }

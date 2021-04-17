@@ -1,46 +1,27 @@
 package ru.drobyazko.common;
 
 import ru.drobyazko.services.TimeTableGeneratorService;
+import ru.drobyazko.services.TimeTableSolverService;
 
 public class CraneRunnable implements Runnable {
 
-    private Thread thread;
-    private Crane crane;
+    private final Thread thread;
+    private final Crane crane;
+    private final ShipService ownerService;
     private ShipSlot currentShipSlot;
-    private ShipService ownerService;
     private int currentTick;
 
     public CraneRunnable(ShipService ownerService, Crane crane) {
         this.ownerService = ownerService;
-        thread = new Thread(this);
         this.crane = crane;
-    }
-
-    private void proceedOneTickGenerate() {
-        synchronized (currentShipSlot) {
-            if(currentShipSlot.getShip().getWorkingWeight() <= 0) {
-                currentShipSlot = ownerService.requestShip(this);
-
-                if (currentShipSlot == null) {
-                    return;
-                }
-
-                if(currentShipSlot.getArrivalTime() == -1) {
-                    currentShipSlot.setArrivalTime(currentTick);
-                }
-
-            }
-            int newWeight = currentShipSlot.getShip().getWorkingWeight() - crane.getCraneEfficiency();
-            currentShipSlot.getShip().setWorkingWeight(newWeight);
-        }
+        thread = new Thread(this);
     }
 
     @Override
     public void run() {
-        if(ownerService instanceof TimeTableGeneratorService) {
+        if (ownerService instanceof TimeTableGeneratorService) {
             generate();
-        }
-        else {
+        } else if (ownerService instanceof TimeTableSolverService){
             solve();
         }
     }
@@ -50,12 +31,13 @@ public class CraneRunnable implements Runnable {
 
             if (currentShipSlot == null) {
                 currentShipSlot = ownerService.requestShip(this);
+
                 if (currentShipSlot == null) {
                     ownerService.barrierAwait();
                     continue;
                 }
 
-                if(currentShipSlot.getArrivalTime() == -1) {
+                if (currentShipSlot.getArrivalTime() == -1) {
                     currentShipSlot.setArrivalTime(currentTick);
                 }
 
@@ -68,34 +50,13 @@ public class CraneRunnable implements Runnable {
                 continue;
             }
 
-            synchronized (currentShipSlot) {
-                if (currentShipSlot.getShip().getWorkingWeight() <= 0) {
-                    currentShipSlot.setDispatchTime(currentTick + 1);
-                    currentShipSlot = null;
-                }
+            if (currentShipSlot.getShip().getWorkingWeight() <= 0) {
+                currentShipSlot.setDispatchTime(currentTick + 1);
+                currentShipSlot = null;
             }
 
             ownerService.barrierAwait();
 
-        }
-    }
-
-    private void proceedOneTickSolve() {
-        synchronized (currentShipSlot) {
-            if(currentShipSlot.getShip().getWorkingWeight() <= 0) {
-                currentShipSlot = ownerService.requestShip(this);
-
-                if (currentShipSlot == null) {
-                    return;
-                }
-
-                if(currentShipSlot.getCranesWorkingOn() == 1) {
-                    currentShipSlot.setStartTime(currentTick);
-                    currentShipSlot.setPenalty( ( ( currentTick - currentShipSlot.getArrivalTime() ) / 60) * 100);
-                }
-            }
-            int newWeight = currentShipSlot.getShip().getWorkingWeight() - crane.getCraneEfficiency();
-            currentShipSlot.getShip().setWorkingWeight(newWeight);
         }
     }
 
@@ -104,17 +65,19 @@ public class CraneRunnable implements Runnable {
 
             if (currentShipSlot == null) {
                 currentShipSlot = ownerService.requestShip(this);
+
                 if (currentShipSlot == null) {
                     ownerService.barrierAwait();
                     continue;
                 }
-                if(currentShipSlot.getCranesWorkingOn() == 1) {
+
+                if (currentShipSlot.getStartTime() == -1) {
                     currentShipSlot.setStartTime(currentTick);
-                    currentShipSlot.setPenalty( ( ( currentTick - currentShipSlot.getArrivalTime() ) / 60) * 100);
+                    currentShipSlot.setPenalty( ( currentTick - currentShipSlot.getArrivalTime() ) / 60 * 100);
                 }
             }
 
-            if(currentShipSlot.getDispatchTimeOffset() > 0) {
+            if (currentShipSlot.getDispatchTimeOffset() > 0) {
                 currentShipSlot.setDispatchTimeOffset(currentShipSlot.getDispatchTimeOffset() - 1);
                 ownerService.barrierAwait();
                 continue;
@@ -127,14 +90,52 @@ public class CraneRunnable implements Runnable {
                 continue;
             }
 
-            synchronized (currentShipSlot) {
-                if (currentShipSlot.getShip().getWorkingWeight() <= 0) {
-                    currentShipSlot.setDispatchTime(currentTick + 1);
-                    currentShipSlot = null;
-                }
+
+
+            if (currentShipSlot.getShip().getWorkingWeight() <= 0) {
+                currentShipSlot.setDispatchTime(currentTick + 1);
+                currentShipSlot = null;
             }
 
             ownerService.barrierAwait();
+        }
+    }
+
+    private void proceedOneTickGenerate() {
+        synchronized (currentShipSlot.getShip()) {
+            if (currentShipSlot.getShip().getWorkingWeight() <= 0) {
+                currentShipSlot = ownerService.requestShip(this);
+
+                if (currentShipSlot == null) {
+                    return;
+                }
+
+                if (currentShipSlot.getArrivalTime() == -1) {
+                    currentShipSlot.setArrivalTime(currentTick);
+                }
+
+            }
+            int newWeight = currentShipSlot.getShip().getWorkingWeight() - crane.getCraneEfficiency();
+            currentShipSlot.getShip().setWorkingWeight(newWeight);
+        }
+    }
+
+    private void proceedOneTickSolve() {
+        synchronized (currentShipSlot.getShip()) {
+            if (currentShipSlot.getShip().getWorkingWeight() <= 0) {
+                currentShipSlot = ownerService.requestShip(this);
+
+                if (currentShipSlot == null) {
+                    return;
+                }
+
+                if (currentShipSlot.getStartTime() == -1) {
+                    currentShipSlot.setStartTime(currentTick);
+                    currentShipSlot.setPenalty( ( ( currentTick - currentShipSlot.getArrivalTime() ) / 60) * 100);
+                }
+            }
+            int newWeight = currentShipSlot.getShip().getWorkingWeight() - crane.getCraneEfficiency();
+            currentShipSlot.getShip().setWorkingWeight(newWeight);
         }
     }
 
@@ -149,4 +150,5 @@ public class CraneRunnable implements Runnable {
     public int getCurrentTick() {
         return currentTick;
     }
+
 }

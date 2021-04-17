@@ -5,11 +5,12 @@ import java.util.Random;
 public class Ship {
 
     private final int weightBound = 10;
-    static private int count = 0;
+    private static int count = 0;
+
     private String name;
     private CargoType cargoType;
     private int nominalWeight;
-    volatile private int workingWeight;
+    private int workingWeight;
 
     public Ship() {
         Random random = new Random();
@@ -17,11 +18,10 @@ public class Ship {
         this.name = "ship" + (count++);
         this.nominalWeight = random.nextInt(weightBound) + 1;
         this.workingWeight = this.nominalWeight;
-        this.cargoType = generateRandomCargoType();
+        this.cargoType = generateRandomCargoType(random);
     }
 
-    private CargoType generateRandomCargoType() {
-        Random random = new Random();
+    private CargoType generateRandomCargoType(Random random) {
         CargoType cargoType = CargoType.BULK;
 
         switch(random.nextInt(3)) {
@@ -51,11 +51,11 @@ public class Ship {
         return nominalWeight;
     }
 
-    synchronized public int getWorkingWeight() {
+    public synchronized int getWorkingWeight() {
         return workingWeight;
     }
 
-    synchronized public void setWorkingWeight(int workingWeight) {
+    public synchronized void setWorkingWeight(int workingWeight) {
         this.workingWeight = workingWeight;
     }
 
