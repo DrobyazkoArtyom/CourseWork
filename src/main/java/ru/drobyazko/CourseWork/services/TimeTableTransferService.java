@@ -1,6 +1,7 @@
 package ru.drobyazko.CourseWork.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.springframework.stereotype.Component;
 import ru.drobyazko.CourseWork.common.ShipSlot;
 import ru.drobyazko.CourseWork.common.TimeTable;
@@ -12,6 +13,18 @@ import static ru.drobyazko.CourseWork.util.TimeFormatter.formatTime;
 
 @Component
 public class TimeTableTransferService {
+
+    public void cleanDirectory() {
+        File file = new File("./timetables/");
+        if(!file.exists()) {
+            return;
+        }
+        try {
+            FileUtils.cleanDirectory(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public void saveJsonFile(String fileName, TimeTable timeTable) {
         ObjectMapper objectMapper = new ObjectMapper();

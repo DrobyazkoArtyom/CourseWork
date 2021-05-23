@@ -1,6 +1,7 @@
 package ru.drobyazko.CourseWork.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -19,13 +20,15 @@ public class TransferController {
     @Autowired
     public TransferController(TimeTableTransferService timeTableTransferService) {
         this.timeTableTransferService = timeTableTransferService;
+        timeTableTransferService.cleanDirectory();
     }
 
-    @GetMapping("/newTimeTable")
-    public ResponseEntity<TimeTable> getNewTimeTable() {
+    @GetMapping("/transferTimeTable")
+    public ResponseEntity<TimeTable> transferTimeTable() {
         RestTemplate restTemplate = new RestTemplate();
-        String resourceUrl = "http://localhost:8080/generate";
+        String resourceUrl = "http://localhost:8080/generateTimeTable";
         ResponseEntity<TimeTable> response = restTemplate.getForEntity(resourceUrl, TimeTable.class);
+        TimeTable timeTable = response.getBody();
 
         Scanner scanner = new Scanner(System.in);
         System.out.println("Write \"y\" if you want to add ships manually or anything else if you don't want to.");
@@ -41,11 +44,11 @@ public class TransferController {
                 int dispatchTime = scanner.nextInt();
                 newShipSlot.setArrivalTime(arrivalTime);
                 newShipSlot.setDispatchTime(dispatchTime);
-                response.getBody().addShipSlot(newShipSlot);
+                timeTable.addShipSlot(newShipSlot);
             }
         }
 
-        return response;
+        return ResponseEntity.ok(timeTable);
     }
 
     @GetMapping("/timeTable/{fileName}")
@@ -56,9 +59,10 @@ public class TransferController {
     }
 
     @PostMapping("/timeTable/{fileName}")
-    public void saveTimeTable(@PathVariable String fileName, @RequestBody TimeTable timeTable) {
+    public ResponseEntity saveTimeTable(@PathVariable String fileName, @RequestBody TimeTable timeTable) {
         timeTableTransferService.saveJsonFile(fileName, timeTable);
         timeTableTransferService.printTimeTable(timeTable);
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
 }

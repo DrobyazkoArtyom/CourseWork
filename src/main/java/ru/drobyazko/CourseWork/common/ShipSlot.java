@@ -49,29 +49,12 @@ public class ShipSlot {
         this.startTime = startTime;
     }
 
-    public synchronized int getArrivalTimeOffset() {
-        return arrivalTimeOffset;
-    }
-
-    public synchronized void setArrivalTimeOffset(int arrivalTimeOffset) {
-        this.arrivalTimeOffset = arrivalTimeOffset;
-    }
-
     public synchronized int getDispatchTimeOffset() {
         return dispatchTimeOffset;
     }
 
     public synchronized void setDispatchTimeOffset(int dispatchTimeOffset) {
         this.dispatchTimeOffset = dispatchTimeOffset;
-    }
-
-    public int getDispatchTimeOffsetNominal() {
-        return dispatchTimeOffsetNominal;
-    }
-
-    public void setDispatchTimeOffsetNominal(int dispatchTimeOffsetNominal) {
-        this.dispatchTimeOffsetNominal = dispatchTimeOffsetNominal;
-        this.dispatchTimeOffset = dispatchTimeOffsetNominal;
     }
 
     public synchronized int getArrivalTime() {
@@ -88,6 +71,23 @@ public class ShipSlot {
 
     public synchronized void setDispatchTime(int dispatchTime) {
         this.dispatchTime = dispatchTime;
+    }
+
+    public int getArrivalTimeOffset() {
+        return arrivalTimeOffset;
+    }
+
+    public void setArrivalTimeOffset(int arrivalTimeOffset) {
+        this.arrivalTimeOffset = arrivalTimeOffset;
+    }
+
+    public int getDispatchTimeOffsetNominal() {
+        return dispatchTimeOffsetNominal;
+    }
+
+    public void setDispatchTimeOffsetNominal(int dispatchTimeOffsetNominal) {
+        this.dispatchTimeOffsetNominal = dispatchTimeOffsetNominal;
+        this.dispatchTimeOffset = dispatchTimeOffsetNominal;
     }
 
     @Override

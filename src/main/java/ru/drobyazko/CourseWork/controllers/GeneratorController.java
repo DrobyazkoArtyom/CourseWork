@@ -17,7 +17,7 @@ public class GeneratorController {
         this.timeTableGeneratorService = timeTableGeneratorService;
     }
 
-    @GetMapping("/generate")
+    @GetMapping("/generateTimeTable")
     public ResponseEntity<TimeTable> getTimetable() {
         return ResponseEntity.ok(timeTableGeneratorService.generateTimeTable());
     }

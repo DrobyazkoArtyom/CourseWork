@@ -12,7 +12,7 @@ import ru.drobyazko.CourseWork.services.TimeTableSolverService;
 public class SolverController {
 
     private final TimeTableSolverService timeTableSolverService;
-    private static int counter = 0;
+    private int counter = 0;
 
     @Autowired
     public SolverController(TimeTableSolverService timeTableSolverService) {
@@ -23,7 +23,7 @@ public class SolverController {
     public ResponseEntity<TimeTable> solveTimeTable() {
         RestTemplate restTemplate = new RestTemplate();
 
-        String resourceUrl = "http://localhost:8080/newTimeTable";
+        String resourceUrl = "http://localhost:8080/transferTimeTable";
         ResponseEntity<TimeTable> response = restTemplate.getForEntity(resourceUrl, TimeTable.class);
 
         TimeTable timeTable = response.getBody();
