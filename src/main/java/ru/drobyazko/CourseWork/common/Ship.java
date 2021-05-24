@@ -4,7 +4,7 @@ import java.util.Random;
 
 public class Ship {
 
-    private final int weightBound = 10;
+    private final int weightBound = 1000;
     private static int count = 0;
 
     private String name;

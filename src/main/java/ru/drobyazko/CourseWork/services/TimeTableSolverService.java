@@ -14,9 +14,12 @@ import java.util.concurrent.CyclicBarrier;
 @Component
 public class TimeTableSolverService implements ShipService {
 
-    private final int bulkCraneEfficiency = 1;
-    private final int liquidCraneEfficiency = 1;
-    private final int containerCraneEfficiency = 1;
+    private final int bulkCraneEfficiency = 2;
+    private final int liquidCraneEfficiency = 2;
+    private final int containerCraneEfficiency = 2;
+    private final int bulkCraneAmount = 4;
+    private final int liquidCraneAmount = 4;
+    private final int containerCraneAmount = 4;
     private TimeTable timeTable;
     private CyclicBarrier cyclicBarrier;
 
@@ -32,9 +35,9 @@ public class TimeTableSolverService implements ShipService {
         int optimalLiquidCraneAmount;
         int optimalContainerCraneAmount;
 
-        Object[] bulkResults = solveCranes(CargoType.BULK, 3);
-        Object[] liquidResults = solveCranes(CargoType.LIQUID, 3);
-        Object[] containerResults = solveCranes(CargoType.CONTAINER, 3);
+        Object[] bulkResults = solveCranes(CargoType.BULK, bulkCraneAmount);
+        Object[] liquidResults = solveCranes(CargoType.LIQUID, liquidCraneAmount);
+        Object[] containerResults = solveCranes(CargoType.CONTAINER, containerCraneAmount);
 
         optimalBulkCraneAmount = (int)bulkResults[1];
         optimalLiquidCraneAmount = (int)liquidResults[1];
@@ -145,7 +148,7 @@ public class TimeTableSolverService implements ShipService {
     private void generateTimeOffsets() {
         Random random = new Random();
         for (ShipSlot shipSlot : timeTable.getShipSlotList()) {
-            shipSlot.setDispatchTimeOffsetNominal(random.nextInt(1441));
+            shipSlot.setDispatchTimeOffsetNominal(random.nextInt(1));
             shipSlot.setArrivalTimeOffset(random.nextInt(21600)-10800);
             if(shipSlot.getArrivalTimeOffset() < 0) {
                 shipSlot.setArrivalTimeOffset(0);

@@ -12,7 +12,7 @@ import java.util.concurrent.CyclicBarrier;
 @Component
 public class TimeTableGeneratorService implements ShipService {
 
-    private final int shipAmount = 50;
+    private final int shipAmount = 200;
     private final int bulkCraneAmount = 2;
     private final int liquidCraneAmount = 2;
     private final int containerCraneAmount = 2;

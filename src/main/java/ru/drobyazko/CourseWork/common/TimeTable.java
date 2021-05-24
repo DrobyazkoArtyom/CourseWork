@@ -1,17 +1,17 @@
 package ru.drobyazko.CourseWork.common;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class TimeTable {
 
-    private final List<ShipSlot> shipSlotList;
+    private final CopyOnWriteArrayList<ShipSlot> shipSlotList;
     private int optimalBulkCraneAmount = 0;
     private int optimalLiquidCraneAmount = 0;
     private int optimalContainerCraneAmount = 0;
 
     public TimeTable() {
-        shipSlotList = new ArrayList<>();
+        shipSlotList = new CopyOnWriteArrayList<>();
     }
 
     public List<ShipSlot> getShipSlotList() {

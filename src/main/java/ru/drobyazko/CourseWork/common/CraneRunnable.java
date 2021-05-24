@@ -62,7 +62,6 @@ public class CraneRunnable implements Runnable {
 
     private void solve() {
         for (currentTick = 0; currentTick < ownerService.tickAmount; ++currentTick) {
-
             if (currentShipSlot == null) {
                 currentShipSlot = ownerService.requestShip(this);
 
@@ -73,7 +72,8 @@ public class CraneRunnable implements Runnable {
 
                 if (currentShipSlot.getStartTime() == -1) {
                     currentShipSlot.setStartTime(currentTick);
-                    currentShipSlot.setPenalty( ( currentTick - currentShipSlot.getArrivalTime() ) / 60 * 100);
+                    currentShipSlot.setPenalty( (currentShipSlot.getDispatchTimeOffset()
+                            + currentTick - currentShipSlot.getArrivalTime() ) / 60 * 100);
                 }
             }
 
@@ -102,7 +102,7 @@ public class CraneRunnable implements Runnable {
     }
 
     private void proceedOneTickGenerate() {
-        synchronized (currentShipSlot.getShip()) {
+        synchronized (ownerService) {
             if (currentShipSlot.getShip().getWorkingWeight() <= 0) {
                 currentShipSlot = ownerService.requestShip(this);
 
@@ -121,7 +121,7 @@ public class CraneRunnable implements Runnable {
     }
 
     private void proceedOneTickSolve() {
-        synchronized (currentShipSlot.getShip()) {
+        synchronized (ownerService) {
             if (currentShipSlot.getShip().getWorkingWeight() <= 0) {
                 currentShipSlot = ownerService.requestShip(this);
 
@@ -131,7 +131,8 @@ public class CraneRunnable implements Runnable {
 
                 if (currentShipSlot.getStartTime() == -1) {
                     currentShipSlot.setStartTime(currentTick);
-                    currentShipSlot.setPenalty( ( ( currentTick - currentShipSlot.getArrivalTime() ) / 60) * 100);
+                    currentShipSlot.setPenalty( (currentShipSlot.getDispatchTimeOffset()
+                            + currentTick - currentShipSlot.getArrivalTime() ) / 60 * 100);
                 }
             }
             int newWeight = currentShipSlot.getShip().getWorkingWeight() - crane.getCraneEfficiency();
